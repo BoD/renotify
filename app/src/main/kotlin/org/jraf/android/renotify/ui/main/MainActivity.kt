@@ -25,26 +25,10 @@
 
 package org.jraf.android.renotify.ui.main
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
-import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import org.jraf.android.renotify.ui.main.MainViewModel.LaunchItem
-import org.jraf.android.renotify.util.logd
 
 class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()

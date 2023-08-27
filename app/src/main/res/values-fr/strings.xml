@@ -1,4 +1,4 @@
 <resources>
-
-
+    <string name="notification_channel_main_name">Canal principal</string>
+    <string name="notification_channel_main_description">Canal principal</string>
 </resources>
