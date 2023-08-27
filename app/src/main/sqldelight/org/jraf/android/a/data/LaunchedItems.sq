@@ -1,0 +1,18 @@
+CREATE TABLE LaunchedItems (
+    id TEXT NOT NULL
+);
+
+insert:
+INSERT OR REPLACE INTO LaunchedItems (
+    id
+) VALUES (
+    :id
+);
+
+select:
+SELECT id, COUNT(id) AS count FROM (
+    SELECT id FROM LaunchedItems ORDER BY rowid DESC LIMIT :historySize
+) GROUP BY id;
+
+delete:
+DELETE FROM LaunchedItems WHERE id = :id;
