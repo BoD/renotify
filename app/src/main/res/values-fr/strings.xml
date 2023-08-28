@@ -1,4 +1,7 @@
 <resources>
     <string name="notification_channel_main_name">Canal principal</string>
     <string name="notification_channel_main_description">Canal principal</string>
+
+    <string name="main_service_switch_enabled">Renotify est ACTIF</string>
+    <string name="main_service_switch_disabled">Renotify est inactif</string>
 </resources>

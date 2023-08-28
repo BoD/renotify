@@ -7,7 +7,7 @@
  *                              /___/
  * repository.
  *
- * Copyright (C) 2022-present Benoit 'BoD' Lubek (BoD@JRAF.org)
+ * Copyright (C) 2023-present Benoit 'BoD' Lubek (BoD@JRAF.org)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,19 +22,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.jraf.android.renotify.ui.main
+package org.jraf.android.renotify.repository
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import android.content.Context
 import kotlinx.coroutines.flow.MutableStateFlow
-import org.jraf.android.renotify.repository.RenotifyPrefs
+import org.jraf.android.kprefs.Prefs
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
-    private val renotifyPrefs = RenotifyPrefs(application)
+class RenotifyPrefs(context: Context) {
+    private val prefs = Prefs(context)
 
-    val isServiceEnabled: MutableStateFlow<Boolean> = renotifyPrefs.isServiceEnabled
-
-    fun toggleServiceEnabled() {
-        isServiceEnabled.value = !isServiceEnabled.value
-    }
+    val isServiceEnabled: MutableStateFlow<Boolean> by prefs.BooleanFlow(false)
 }

@@ -16,6 +16,7 @@ androidx-compose-material3 = "1.1.1"
 google-material = "1.9.0"
 benManes-versions = "0.47.0"
 sqldelight = "1.5.5"
+kprefs = "1.7.0"
 
 [plugins]
 benManes-versions = { id = "com.github.ben-manes.versions", version.ref = "benManes-versions" }
@@ -48,3 +49,5 @@ google-material = { group = "com.google.android.material", name = "material", ve
 
 sqldelight-androidDriver = { group = "com.squareup.sqldelight", name = "android-driver", version.ref = "sqldelight" }
 sqldelight-coroutines = { group = "com.squareup.sqldelight", name = "coroutines-extensions", version.ref = "sqldelight" }
+
+kprefs = { group = "org.jraf", name = "kprefs", version.ref = "kprefs" }

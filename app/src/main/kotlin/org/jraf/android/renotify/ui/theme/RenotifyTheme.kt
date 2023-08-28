@@ -37,7 +37,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val RenotifyLightColorScheme: ColorScheme = lightColorScheme()
-private val RenotifyDarkColorScheme: ColorScheme = darkColorScheme(surface = Color.Black)
+private val RenotifyDarkColorScheme: ColorScheme = darkColorScheme(
+    surface = Color(0xFF222222),
+    background = Color.Black,
+)
 
 @Composable
 fun RenotifyTheme(
@@ -46,7 +49,12 @@ fun RenotifyTheme(
     val darkTheme = isSystemInDarkTheme()
     val dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val colorScheme = when {
-        dynamicColor && darkTheme -> dynamicDarkColorScheme(LocalContext.current).copy(surface = Color.Black)
+        dynamicColor && darkTheme -> dynamicDarkColorScheme(LocalContext.current)
+            .copy(
+                surface = Color(0xFF222222),
+                background = Color.Black,
+            )
+
         dynamicColor && !darkTheme -> dynamicLightColorScheme(LocalContext.current)
         darkTheme -> RenotifyDarkColorScheme
         else -> RenotifyLightColorScheme

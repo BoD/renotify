@@ -2,4 +2,7 @@
     <string name="app_name" translatable="false">Renotify</string>
     <string name="notification_channel_main_name">Main channel</string>
     <string name="notification_channel_main_description">Main channel</string>
+
+    <string name="main_service_switch_enabled">Renotify is ON</string>
+    <string name="main_service_switch_disabled">Renotify is off</string>
 </resources>
