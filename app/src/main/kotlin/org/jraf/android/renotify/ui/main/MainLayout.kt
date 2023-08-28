@@ -25,13 +25,18 @@
 
 package org.jraf.android.renotify.ui.main
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -45,12 +50,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.jraf.android.renotify.R
 import org.jraf.android.renotify.ui.theme.RenotifyTheme
+import org.jraf.android.renotify.util.toDp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainLayout(isServiceEnabled: Boolean, onServiceEnabledClick: () -> Unit) {
+fun MainLayout(
+    shouldShowRequestPermissionRationale: Boolean,
+    shouldShowGoToSettingsText: Boolean,
+    isServiceEnabled: Boolean,
+    onServiceEnabledClick: () -> Unit,
+    onRequestPermissionRationaleClick: () -> Unit,
+    onGoToSettingsClick: () -> Unit,
+) {
     RenotifyTheme {
         Scaffold(
             topBar = {
@@ -62,11 +76,29 @@ fun MainLayout(isServiceEnabled: Boolean, onServiceEnabledClick: () -> Unit) {
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp)
                 ) {
+                    if (shouldShowRequestPermissionRationale) {
+                        ExplainerWithButton(
+                            explainerResId = R.string.main_requestPermissionRationale_text,
+                            buttonTextResId = R.string.main_requestPermissionRationale_button,
+                            onButtonClick = onRequestPermissionRationaleClick
+                        )
+                        Spacer(modifier = Modifier.size(8.sp.toDp()))
+                    }
+
+                    if (shouldShowGoToSettingsText) {
+                        ExplainerWithButton(
+                            explainerResId = R.string.main_goToSettings_text,
+                            buttonTextResId = R.string.main_goToSettings_button,
+                            onButtonClick = onGoToSettingsClick
+                        )
+                        Spacer(modifier = Modifier.size(8.sp.toDp()))
+                    }
+
                     OnOffButton(
                         isServiceEnabled = isServiceEnabled,
                         onServiceEnabledClick = onServiceEnabledClick
@@ -76,6 +108,31 @@ fun MainLayout(isServiceEnabled: Boolean, onServiceEnabledClick: () -> Unit) {
         }
     }
 }
+
+@Composable
+private fun ExplainerWithButton(
+    @StringRes explainerResId: Int,
+    @StringRes buttonTextResId: Int,
+    onButtonClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            modifier = Modifier
+                .padding(8.sp.toDp())
+                .weight(1F),
+            text = stringResource(explainerResId),
+        )
+
+        Button(onClick = onButtonClick) {
+            Text(text = stringResource(buttonTextResId))
+        }
+        Spacer(modifier = Modifier.size(8.sp.toDp()))
+    }
+}
+
 
 @Composable
 private fun OnOffButton(isServiceEnabled: Boolean, onServiceEnabledClick: () -> Unit) {
@@ -103,7 +160,11 @@ private fun OnOffButton(isServiceEnabled: Boolean, onServiceEnabledClick: () -> 
 @Preview
 private fun MainLayoutPreview() {
     MainLayout(
+        shouldShowRequestPermissionRationale = true,
+        shouldShowGoToSettingsText = true,
         isServiceEnabled = false,
         onServiceEnabledClick = {},
+        onRequestPermissionRationaleClick = {},
+        onGoToSettingsClick = {},
     )
 }

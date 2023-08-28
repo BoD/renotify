@@ -7,7 +7,7 @@
  *                              /___/
  * repository.
  *
- * Copyright (C) 2022-present Benoit 'BoD' Lubek (BoD@JRAF.org)
+ * Copyright (C) 2023-present Benoit 'BoD' Lubek (BoD@JRAF.org)
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,22 +22,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.jraf.android.renotify.ui.main
+package org.jraf.android.renotify.util
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import org.jraf.android.renotify.repository.RenotifyPrefs
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
-    private val renotifyPrefs = RenotifyPrefs(application)
-
-    val isServiceEnabled: MutableStateFlow<Boolean> = renotifyPrefs.isServiceEnabled
-
-    val shouldShowRequestPermissionRationale = MutableStateFlow(false)
-    val shouldShowGoToSettingsText = MutableStateFlow(false)
-
-    fun toggleServiceEnabled() {
-        isServiceEnabled.value = !isServiceEnabled.value
-    }
-}
+@Composable
+fun TextUnit.toDp(): Dp = with(LocalDensity.current) { toDp() }

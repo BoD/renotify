@@ -5,4 +5,9 @@
 
     <string name="main_service_switch_enabled">Renotify is ON</string>
     <string name="main_service_switch_disabled">Renotify is off</string>
+    <string name="main_requestPermissionRationale_text">The Send Notifications permission is needed to re-notify your notifications.</string>
+    <string name="main_requestPermissionRationale_button">OK</string>
+    <string name="main_goToSettings_text">You need to grant the permission to read notifications</string>
+    <string name="main_goToSettings_button">Open settings</string>
+
 </resources>

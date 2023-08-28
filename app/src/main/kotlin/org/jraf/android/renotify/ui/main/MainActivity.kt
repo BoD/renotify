@@ -25,24 +25,72 @@
 
 package org.jraf.android.renotify.ui.main
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
+import org.jraf.android.renotify.util.logd
 
 class MainActivity : ComponentActivity() {
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        logd("requestPermissionLauncher Permission granted: $granted")
+        viewModel.shouldShowRequestPermissionRationale.value = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            false
+        }
+    }
+
     private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_DENIED) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.POST_NOTIFICATIONS)) {
+                    viewModel.shouldShowRequestPermissionRationale.value = true
+                } else {
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        }
+
         setContent {
             val isServiceEnabled by viewModel.isServiceEnabled.collectAsState(initial = false)
+            val shouldShowRequestPermissionRationale: Boolean by viewModel.shouldShowRequestPermissionRationale.collectAsState(initial = false)
+            val shouldShowGoToSettingsText: Boolean by viewModel.shouldShowGoToSettingsText.collectAsState(initial = false)
             MainLayout(
+                shouldShowRequestPermissionRationale = shouldShowRequestPermissionRationale,
+                shouldShowGoToSettingsText = shouldShowGoToSettingsText,
                 isServiceEnabled = isServiceEnabled,
                 onServiceEnabledClick = viewModel::toggleServiceEnabled,
+                onRequestPermissionRationaleClick = {
+                    viewModel.shouldShowRequestPermissionRationale.value = false
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                },
+                onGoToSettingsClick = {
+                    startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                },
             )
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.shouldShowGoToSettingsText.value = !NotificationManagerCompat.getEnabledListenerPackages(this).contains(packageName)
     }
 }

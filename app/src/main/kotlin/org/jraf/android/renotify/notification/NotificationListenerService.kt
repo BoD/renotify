@@ -35,8 +35,12 @@ import java.util.concurrent.TimeUnit
 
 class NotificationListenerService : android.service.notification.NotificationListenerService() {
     companion object {
-        private const val SHOW_NOTIFICATION_DELAY_SECONDS = 15L
+        private const val SHOW_NOTIFICATION_DELAY_SECONDS = 30L
         private const val CANCEL_NOTIFICATION_AFTER_SHON_DELAY_SECONDS = 4L
+
+        private val ignoredPackages = setOf(
+            "com.google.android.deskclock",
+        )
     }
 
     private val renotifyPrefs by lazy { RenotifyPrefs(application) }
@@ -70,6 +74,7 @@ class NotificationListenerService : android.service.notification.NotificationLis
             logd("scheduleOrUnscheduleAlert already scheduled")
             return
         }
+        logd("scheduleOrUnscheduleAlert scheduling")
         scheduledFuture = scheduler.schedule({
             maybeAlert()
         }, SHOW_NOTIFICATION_DELAY_SECONDS, TimeUnit.SECONDS)
@@ -113,9 +118,13 @@ class NotificationListenerService : android.service.notification.NotificationLis
             val notification = statusBarNotification.notification!!
             val hasMediaSession = notification.extras.containsKey(Notification.EXTRA_MEDIA_SESSION)
             val isOwnNotification = statusBarNotification.packageName == packageName
+            val isIgnoredPackage = statusBarNotification.packageName in ignoredPackages
+            val hasOverrideGroupKey = statusBarNotification.overrideGroupKey != null
             !isOwnNotification &&
+                    !isIgnoredPackage &&
                     !statusBarNotification.isOngoing &&
                     statusBarNotification.isClearable &&
+                    !hasOverrideGroupKey &&
                     !hasMediaSession
         }
         return activeNotifications.size

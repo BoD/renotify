@@ -4,4 +4,8 @@
 
     <string name="main_service_switch_enabled">Renotify est ACTIF</string>
     <string name="main_service_switch_disabled">Renotify est inactif</string>
+    <string name="main_requestPermissionRationale_text">La permisssion Envoi de Notifications est nécessaire pour to re-notifier vos notifications.</string>
+    <string name="main_requestPermissionRationale_button">OK</string>
+    <string name="main_goToSettings_text">Vous devez accorder la permission de lire les notifications</string>
+    <string name="main_goToSettings_button">Ouvrir les paramètres</string>
 </resources>

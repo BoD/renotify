@@ -30,6 +30,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Process
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -46,6 +47,8 @@ private fun createNotificationChannel(context: Context) {
         NotificationManager.IMPORTANCE_DEFAULT
     ).apply {
         description = context.getString(R.string.notification_channel_main_description)
+        enableVibration(true)
+        vibrationPattern = longArrayOf(0L, 250L, 250L, 250L)
     }
     val notificationManager = NotificationManagerCompat.from(context)
     notificationManager.createNotificationChannel(channel)
@@ -55,6 +58,7 @@ private fun createNotification(context: Context): Notification {
     return NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_MAIN)
         .setSmallIcon(R.drawable.ic_notification_24)
         .setAutoCancel(true)
+        .setVibrate(longArrayOf(0L, 250L, 250L, 250L))
         .setShowWhen(false)
         .build()
 }
@@ -63,10 +67,11 @@ fun showNotification(context: Context) {
     createNotificationChannel(context)
     val notification = createNotification(context)
     val notificationManager = NotificationManagerCompat.from(context)
-    if (context.checkPermission(Manifest.permission.POST_NOTIFICATIONS, Process.myPid(), Process.myUid()) != PackageManager.PERMISSION_GRANTED) {
-        // TODO request permission
-        logd("showNotification POST_NOTIFICATIONS permission not granted")
-        return
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        if (context.checkPermission(Manifest.permission.POST_NOTIFICATIONS, Process.myPid(), Process.myUid()) != PackageManager.PERMISSION_GRANTED) {
+            logd("showNotification POST_NOTIFICATIONS permission not granted")
+            return
+        }
     }
     notificationManager.notify(NOTIFICATION_ID, notification)
 }
