@@ -75,3 +75,22 @@ fun cancelNotification(context: Context) {
     val notificationManager = NotificationManagerCompat.from(context)
     notificationManager.cancel(NOTIFICATION_ID)
 }
+
+private fun Notification.flagDescription(): String {
+    return buildString {
+        if (flags and Notification.FLAG_SHOW_LIGHTS != 0) append("1 (SHOW_LIGHTS), ")
+        if (flags and Notification.FLAG_ONGOING_EVENT != 0) append("2 (ONGOING_EVENT), ")
+        if (flags and Notification.FLAG_INSISTENT != 0) append("4 (INSISTENT), ")
+        if (flags and Notification.FLAG_ONLY_ALERT_ONCE != 0) append("8 (ONLY_ALERT_ONCE), ")
+        if (flags and Notification.FLAG_AUTO_CANCEL != 0) append("16 (AUTO_CANCEL), ")
+        if (flags and Notification.FLAG_NO_CLEAR != 0) append("32 (NO_CLEAR), ")
+        if (flags and Notification.FLAG_FOREGROUND_SERVICE != 0) append("64 (FOREGROUND_SERVICE), ")
+        if (flags and Notification.FLAG_HIGH_PRIORITY != 0) append("128 (HIGH_PRIORITY), ")
+        if (flags and Notification.FLAG_LOCAL_ONLY != 0) append("256 (LOCAL_ONLY), ")
+        if (flags and Notification.FLAG_GROUP_SUMMARY != 0) append("512 (GROUP_SUMMARY), ")
+        if (flags and 1024 != 0) append("1024 (AUTOGROUP_SUMMARY), ")
+        if (flags and 2048 != 0) append("2048 (CAN_COLORIZE), ")
+        if (flags and Notification.FLAG_BUBBLE != 0) append("4096 (BUBBLE), ")
+        if (flags and 8192 != 0) append("8192 (UNKNOWN), ")
+    }
+}

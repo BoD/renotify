@@ -26,6 +26,7 @@ package org.jraf.android.renotify.notification
 
 import android.app.Notification
 import android.service.notification.StatusBarNotification
+import org.jraf.android.renotify.repository.RenotifyPrefs
 import org.jraf.android.renotify.util.logd
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -38,28 +39,31 @@ class NotificationListenerService : android.service.notification.NotificationLis
         private const val CANCEL_NOTIFICATION_AFTER_SHON_DELAY_SECONDS = 4L
     }
 
+    private val renotifyPrefs by lazy { RenotifyPrefs(application) }
+
     private val scheduler: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
     private var scheduledFuture: ScheduledFuture<*>? = null
 
+
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         super.onNotificationPosted(sbn)
-        val notification = sbn.notification!!
-        val title = notification.extras.getString(Notification.EXTRA_TITLE)
-        val text = notification.extras.getCharSequence(Notification.EXTRA_TEXT, "").toString()
-        val hasMediaSession = notification.extras.containsKey(Notification.EXTRA_MEDIA_SESSION)
-        val flags = notification.flags
-        val flagDescription = notification.flagDescription()
-        logd("onNotificationPosted tag=${sbn.tag} key=${sbn.key} title=$title text=$text hasMediaSession=$hasMediaSession flags=$flags flagDescription=$flagDescription")
+        logd("onNotificationPosted")
+        scheduleOrUnscheduleAlert()
+    }
+
+    override fun onNotificationRemoved(sbn: StatusBarNotification, rankingMap: RankingMap?, reason: Int) {
+        super.onNotificationRemoved(sbn, rankingMap, reason)
+        logd("onNotificationRemoved")
         scheduleOrUnscheduleAlert()
     }
 
     private fun scheduleOrUnscheduleAlert() {
+        val isServiceEnabled = renotifyPrefs.isServiceEnabled.value
         val activeNotificationsCount = getActiveNotificationCount()
-        logd("scheduleOrUnscheduleAlert activeNotificationsCount=$activeNotificationsCount")
-        if (activeNotificationsCount == 0) {
+        logd("scheduleOrUnscheduleAlert isServiceEnabled=$isServiceEnabled activeNotificationsCount=$activeNotificationsCount")
+        if (!isServiceEnabled || activeNotificationsCount == 0) {
             logd("scheduleOrUnscheduleAlert unscheduling")
-            scheduledFuture?.cancel(false)
-            scheduledFuture = null
+            unscheduleAlert()
             return
         }
         if (scheduledFuture != null) {
@@ -71,11 +75,18 @@ class NotificationListenerService : android.service.notification.NotificationLis
         }, SHOW_NOTIFICATION_DELAY_SECONDS, TimeUnit.SECONDS)
     }
 
+    private fun unscheduleAlert() {
+        scheduledFuture?.cancel(false)
+        scheduledFuture = null
+    }
+
     private fun maybeAlert() {
+        val isServiceEnabled = renotifyPrefs.isServiceEnabled.value
         val activeNotificationsCount = getActiveNotificationCount()
-        logd("maybeAlert activeNotificationsCount=$activeNotificationsCount")
-        if (activeNotificationsCount == 0) {
-            logd("maybeAlert no active notifications, not alerting")
+        logd("maybeAlert isServiceEnabled=$isServiceEnabled activeNotificationsCount=$activeNotificationsCount")
+        if (!isServiceEnabled || activeNotificationsCount == 0) {
+            logd("maybeAlert service not enabled or no active notifications, not alerting and unscheduling")
+            unscheduleAlert()
             return
         }
         logd("maybeAlert show notification")
@@ -97,12 +108,6 @@ class NotificationListenerService : android.service.notification.NotificationLis
         }, notificationCancelDelay, TimeUnit.SECONDS)
     }
 
-    override fun onNotificationRemoved(sbn: StatusBarNotification, rankingMap: RankingMap?, reason: Int) {
-        super.onNotificationRemoved(sbn, rankingMap, reason)
-        logd("onNotificationRemoved tag=${sbn.tag} key=${sbn.key}")
-        scheduleOrUnscheduleAlert()
-    }
-
     private fun getActiveNotificationCount(): Int {
         val activeNotifications = activeNotifications.filter { statusBarNotification ->
             val notification = statusBarNotification.notification!!
@@ -114,24 +119,5 @@ class NotificationListenerService : android.service.notification.NotificationLis
                     !hasMediaSession
         }
         return activeNotifications.size
-    }
-
-    private fun Notification.flagDescription(): String {
-        return buildString {
-            if (flags and Notification.FLAG_SHOW_LIGHTS != 0) append("1 (SHOW_LIGHTS), ")
-            if (flags and Notification.FLAG_ONGOING_EVENT != 0) append("2 (ONGOING_EVENT), ")
-            if (flags and Notification.FLAG_INSISTENT != 0) append("4 (INSISTENT), ")
-            if (flags and Notification.FLAG_ONLY_ALERT_ONCE != 0) append("8 (ONLY_ALERT_ONCE), ")
-            if (flags and Notification.FLAG_AUTO_CANCEL != 0) append("16 (AUTO_CANCEL), ")
-            if (flags and Notification.FLAG_NO_CLEAR != 0) append("32 (NO_CLEAR), ")
-            if (flags and Notification.FLAG_FOREGROUND_SERVICE != 0) append("64 (FOREGROUND_SERVICE), ")
-            if (flags and Notification.FLAG_HIGH_PRIORITY != 0) append("128 (HIGH_PRIORITY), ")
-            if (flags and Notification.FLAG_LOCAL_ONLY != 0) append("256 (LOCAL_ONLY), ")
-            if (flags and Notification.FLAG_GROUP_SUMMARY != 0) append("512 (GROUP_SUMMARY), ")
-            if (flags and 1024 != 0) append("1024 (AUTOGROUP_SUMMARY), ")
-            if (flags and 2048 != 0) append("2048 (CAN_COLORIZE), ")
-            if (flags and Notification.FLAG_BUBBLE != 0) append("4096 (BUBBLE), ")
-            if (flags and 8192 != 0) append("8192 (UNKNOWN), ")
-        }
     }
 }
