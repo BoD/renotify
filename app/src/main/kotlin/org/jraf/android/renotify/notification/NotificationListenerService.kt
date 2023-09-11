@@ -25,12 +25,17 @@
 package org.jraf.android.renotify.notification
 
 import android.app.Notification
+import android.content.Context
 import android.service.notification.StatusBarNotification
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.Worker
+import androidx.work.WorkerParameters
 import org.jraf.android.renotify.repository.RenotifyPrefs
 import org.jraf.android.renotify.util.logd
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 class NotificationListenerService : android.service.notification.NotificationListenerService() {
@@ -44,10 +49,6 @@ class NotificationListenerService : android.service.notification.NotificationLis
     }
 
     private val renotifyPrefs by lazy { RenotifyPrefs(application) }
-
-    private val scheduler: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
-    private var scheduledFuture: ScheduledFuture<*>? = null
-
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         super.onNotificationPosted(sbn)
@@ -70,47 +71,20 @@ class NotificationListenerService : android.service.notification.NotificationLis
             unscheduleAlert()
             return
         }
-        if (scheduledFuture != null) {
-            logd("scheduleOrUnscheduleAlert already scheduled")
-            return
-        }
         logd("scheduleOrUnscheduleAlert scheduling")
-        scheduledFuture = scheduler.schedule({
-            maybeAlert()
-        }, SHOW_NOTIFICATION_DELAY_SECONDS, TimeUnit.SECONDS)
+        val maybeAlertWorkRequest = PeriodicWorkRequestBuilder<MaybeAlertWorker>(SHOW_NOTIFICATION_DELAY_SECONDS, TimeUnit.SECONDS)
+            .setInitialDelay(SHOW_NOTIFICATION_DELAY_SECONDS, TimeUnit.SECONDS)
+            .build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            MaybeAlertWorker::class.java.name,
+            ExistingPeriodicWorkPolicy.KEEP,
+            maybeAlertWorkRequest,
+        )
     }
 
     private fun unscheduleAlert() {
-        scheduledFuture?.cancel(false)
-        scheduledFuture = null
-    }
-
-    private fun maybeAlert() {
-        val isServiceEnabled = renotifyPrefs.isServiceEnabled.value
-        val activeNotificationsCount = getActiveNotificationCount()
-        logd("maybeAlert isServiceEnabled=$isServiceEnabled activeNotificationsCount=$activeNotificationsCount")
-        if (!isServiceEnabled || activeNotificationsCount == 0) {
-            logd("maybeAlert service not enabled or no active notifications, not alerting and unscheduling")
-            unscheduleAlert()
-            return
-        }
-        logd("maybeAlert show notification")
-        try {
-            showNotification(this)
-            scheduleCancelNotification()
-        } catch (e: Exception) {
-            logd(e, "Error showing notification")
-        }
-        scheduledFuture = null
-        scheduleOrUnscheduleAlert()
-    }
-
-    private fun scheduleCancelNotification() {
-        val notificationCancelDelay = CANCEL_NOTIFICATION_AFTER_SHON_DELAY_SECONDS
-        logd("scheduleCancelNotification")
-        scheduler.schedule({
-            cancelNotification(this)
-        }, notificationCancelDelay, TimeUnit.SECONDS)
+        logd("unscheduleAlert")
+        WorkManager.getInstance(this).cancelUniqueWork(MaybeAlertWorker::class.java.name)
     }
 
     private fun getActiveNotificationCount(): Int {
@@ -129,4 +103,39 @@ class NotificationListenerService : android.service.notification.NotificationLis
         }
         return activeNotifications.size
     }
+
+    class MaybeAlertWorker(private val appContext: Context, workerParams: WorkerParameters) : Worker(appContext, workerParams) {
+        private val renotifyPrefs by lazy { RenotifyPrefs(appContext) }
+        private val scheduler: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
+
+        override fun doWork(): Result {
+            maybeAlert()
+            return Result.success()
+        }
+
+        private fun maybeAlert() {
+            val isServiceEnabled = renotifyPrefs.isServiceEnabled.value
+            logd("maybeAlert isServiceEnabled=$isServiceEnabled")
+            if (!isServiceEnabled) {
+                logd("maybeAlert service not enabled, not alerting")
+                return
+            }
+            logd("maybeAlert show notification")
+            try {
+                showNotification(appContext)
+                scheduleCancelNotification()
+            } catch (e: Exception) {
+                logd(e, "Error showing notification")
+            }
+        }
+
+        private fun scheduleCancelNotification() {
+            val notificationCancelDelay = CANCEL_NOTIFICATION_AFTER_SHON_DELAY_SECONDS
+            logd("scheduleCancelNotification")
+            scheduler.schedule({
+                cancelNotification(appContext)
+            }, notificationCancelDelay, TimeUnit.SECONDS)
+        }
+    }
 }
+
